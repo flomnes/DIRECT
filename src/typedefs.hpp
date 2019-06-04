@@ -17,8 +17,4 @@ void display(std::ostream& os, const std::vector<T>& v, char delim='\n') {
   }
 }
 
-#ifdef DEBUG
-static size_t idx_cvx = 0;
-#endif
-
 #endif

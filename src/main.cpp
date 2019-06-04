@@ -71,6 +71,7 @@ int main(int argc, char** argv) {
     return 0;
   } else {
     std::cerr << "Not enough arguments" << std::endl;
+    std::cerr << "Usage : " << argv[0] << " MaxEvals Dimension epsilon" << std::endl;
     return 1;
   }
 }

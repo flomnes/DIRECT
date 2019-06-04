@@ -1,5 +1,9 @@
 #include "DIRECT.hpp"
 
+#ifdef DEBUG
+static int idx_cvx = 0;
+#endif
+
 std::vector<size_t> DIRECT::SelectRectanglesFromSlopes(const std::vector<size_t>& LCHIndices, const std::vector<Point2D >& DistanceValuesAtCenters)
 {
   std::vector<size_t> SelectedRectanglesIds;
