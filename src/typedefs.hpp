@@ -3,7 +3,8 @@
 #include <utility>
 #include "PointND.hpp"
 
-typedef double (*functND)(const PointND&, const void* data);
+typedef std::pair<PointND<double>, PointND<int> > PointMixed;
+typedef double (*functND)(const PointMixed&, const void* data);
 
 //TODO remove
 template<typename T>

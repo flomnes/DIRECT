@@ -40,7 +40,6 @@ std::vector<size_t> DIRECT::SelectRectanglesFromSlopes(const std::vector<size_t>
   return RectangleIds;
 }
 
-
 std::vector<size_t> DIRECT::PotentiallyOptimalRectangles(void)
 {
   // Form the lower-right convex hull in the (f(c), d) plane
@@ -65,17 +64,12 @@ std::vector<size_t> DIRECT::PotentiallyOptimalRectangles(void)
   std::ofstream cvx("resu/cvx"+std::to_string(idx_cvx)+".txt");
   idx_cvx++;
   for(size_t ii = 0; ii < CondIndices.size(); ii++) {
-    for(size_t jj = 0; jj < d; jj++) {
-      cvx << RectangleList[CondIndices[ii]].Center(jj) << " ";
-    }
-    cvx << std::endl;
+    cvx << RectangleList[CondIndices[ii]].Center() << std::endl;
+
   }
 
   for(size_t ii = 0; ii < RectangleList.size(); ii++) {
-    for(size_t jj = 0; jj < d; jj++) {
-      pts << RectangleList[ii].Center(jj) << " ";
-    }
-    pts << std::endl;
+    pts << RectangleList[ii].Center() << std::endl;
   }
 #endif
 

@@ -1,125 +1,233 @@
 #ifndef DIRECT_RECTANGLE_ND_HPP
 #define DIRECT_RECTANGLE_ND_HPP
 
+#include <cmath>
+#include <cassert>
 #include "PointND.hpp"
 #include "typedefs.hpp"
 #include "EvalFunctionND.hpp"
-#include <cmath>
+#include "RectangleFloat.hpp"
+#include "RectangleInteger.hpp"
+
 
 
 class RectangleND {
-  // c : center of rectangle
-  // l : half-length of sides
-  // fc : value of f evaluated at the center
 private:
-  PointND c, l;
-  size_t d;
-  double fc;
+  // Integer rectangle
+  RectangleInteger RI;
+  // Float rectangle
+  RectangleFloat RF;
+  // Function value at center
+  double v;
 
+  RectangleND CopySideFloat(size_t dir, char side) const {
+    const double l = LengthDirection(dir);
+    RectangleFloat NewRF = RF;
+    NewRF.NumberDivisions(dir)++;
+    NewRF.Center(dir) = RF.Center(dir) + side*(l/3);
+    return Copy(NewRF);
+  }
 public:
-  RectangleND() {
-  }
-
-  RectangleND(size_t d_) {
-    d = d_;
-    c = PointND(d);
-    l = PointND(d);
-  }
-  RectangleND(PointND c_, PointND l_, size_t d_) {
-    c = c_;
-    l = l_;
-    d = d_;
-  }
-
-  // Create new rectangle from old one using pre-computed value at center
-  // TopBottom = 0 or 1
-  RectangleND(const RectangleND& R, double ValueAtCenter, size_t AlongDimension, int TopBottom) {
-    d = R.d;
-    fc = ValueAtCenter;
-    c = PointND(d);
-    l = PointND(d);
-    const int dj = 2*TopBottom-1;
-    for(size_t ii = 0; ii < d; ii++) {
-      if(ii == AlongDimension) {
-	const double delta = R.l[ii]/3;
-	c[ii] = R.c[ii] + 2*dj*delta;
-	l[ii] = R.l[ii] / 3;
-      } else {
-	c[ii] = R.c[ii];
-	l[ii] = R.l[ii];
+  RectangleND CopySideInteger(size_t dir, int delta, char side) const {
+    RectangleInteger NewRI = RI;
+    dir -= DimensionFloat();
+    NewRI.NumberDivisions(dir)++;
+    const int a = NewRI(dir, 0);
+    const int b = NewRI(dir, 1);
+    if(delta >=1) {
+      switch(side) {
+      case -1:
+	NewRI(dir, 0) = a;
+	NewRI(dir, 1) = a+delta-1;
+	break;
+      case 0:
+	NewRI(dir, 0) = a+delta;
+	NewRI(dir, 1) = b-delta;
+	break;
+      case 1:
+	NewRI(dir, 0) = b-delta+1;
+	NewRI(dir, 1) = b;
+	break;
+      default:
+	std::cerr << "Unexpected side value" << std::endl;
+	exit(1);
+      }
+    } else {
+      switch(side) {
+      case 0:
+	NewRI(dir, 0) = a;
+	NewRI(dir, 1) = a;
+	break;
+      case 1:
+	NewRI(dir, 0) = b;
+	NewRI(dir, 1) = b;
+	break;
+      default:
+	std::cerr << "Unexpected side value" << std::endl;
+	exit(1);
       }
     }
+    return Copy(NewRI);
   }
 
-  // TODO : store value in class variable to avoid recomputations
-  double Distance(void) const {
-    double sum = 0;
-    for(size_t ii = 0; ii < d; ii++) {
-      sum += l[ii]*l[ii];
+  RectangleND(const PointMixed& LowerBound, const PointMixed& UpperBound) {
+    //    RF = RectangleFloat(LowerBound.first, UpperBound.first);
+    const size_t dimFloat = LowerBound.first.Dimension();
+    RF = RectangleFloat(PointND<double>(dimFloat, 0), PointND<double>(dimFloat,1));
+    RI = RectangleInteger(LowerBound.second, UpperBound.second);
+  }
+
+  RectangleND(const RectangleInteger& RI_, const RectangleFloat& RF_, double v_) {
+    RI = RI_;
+    RF = RF_;
+    v = v_;
+  }
+
+  RectangleND(const RectangleInteger& RI_, const RectangleFloat& RF_) {
+    RI = RI_;
+    RF = RF_;
+  }
+
+
+  int ComputeDelta(size_t dir) const {
+    assert(dir >= DimensionFloat());
+    dir -= DimensionFloat();
+    return RI.ComputeDelta(dir);
+  }
+
+  RectangleInteger GetRI() const {
+    return RI;
+  }
+
+  RectangleFloat GetRF() const {
+    return RF;
+  }
+
+  RectangleND Copy(const RectangleInteger& RI_) const {
+    return RectangleND(RI_, RF);
+  }
+
+  RectangleND Copy(const RectangleFloat& RF_) const {
+    return RectangleND(RI, RF_);
+  }
+
+  PointMixed Center() const {
+    return std::make_pair(RF.Center(), RI.Center());
+  }
+
+  PointMixed Center(const PointMixed& LowerBound, const PointMixed& UpperBound) {
+    const PointMixed x = Center();
+    const size_t df = x.first.Dimension();
+    PointMixed xis = std::make_pair(PointND<>(df), x.second);
+    for(size_t ii = 0; ii < df; ii++) {
+      xis.first[ii] = x.first[ii] * (UpperBound.first[ii] - LowerBound.first[ii]) + LowerBound.first[ii];
+   }
+    return xis;
+  }
+
+  size_t DimensionFloat() const {
+    return RF.Dimension();
+  }
+
+  size_t DimensionInteger() const {
+    return RI.Dimension();
+  }
+
+  size_t Dimension() const {
+    return DimensionFloat() + DimensionInteger();
+  }
+
+  unsigned int NumberDivisions(size_t dim) const {
+    if((dim) < DimensionFloat()) {
+      return RF.NumberDivisions(dim);
+    } else {
+      dim -= DimensionFloat();
+      return RI.NumberDivisions(dim);
     }
-    return std::sqrt(sum);
   }
 
-  double LongestHalfSide(void) const {
-    double r = l[0];
-    for(size_t ii = 1; ii < d; ii++) {
-      if(r < l[ii]) r = l[ii];
+
+  unsigned int& NumberDivisions(size_t dim) {
+    if((dim) < DimensionFloat()) {
+      return RF.NumberDivisions(dim);
+    } else {
+      dim -= DimensionFloat();
+      return RI.NumberDivisions(dim);
+    }
+  }
+
+  RectangleND CopyLeftFloat(size_t dir) const {
+    return CopySideFloat(dir, -1);
+  }
+
+  RectangleND CopyRightFloat(size_t dir) const {
+    return CopySideFloat(dir, 1);
+  }
+
+  bool IsDirectionAdmissible(size_t dim) const {
+    if(dim < DimensionFloat()) {
+      return true;
+    } else {
+      dim -= DimensionFloat();
+      return RI.IsDirectionAdmissible(dim);
+    }
+  }
+
+  // Returns a vector containing the largest admissible directions
+  // Any float direction is admissible
+  // An integer direction is admissible only if it contains two points or more
+
+  size_t LargestAdmissibleDirection() const {
+    const size_t dim = Dimension();
+    // Get value of largest (i.e least divided) direction
+    size_t ii = 0;
+    unsigned int r;
+    while(!IsDirectionAdmissible(ii)) {
+      ii++;
+    }
+    assert(ii < dim && "No admissible direction for rectangle division");
+    r = ii;
+    unsigned int smallestdim = NumberDivisions(ii);
+    for(ii = 0; ii < dim; ii++) {
+      if(!IsDirectionAdmissible(ii))
+	continue;
+      if(smallestdim > NumberDivisions(ii)) {
+	smallestdim = NumberDivisions(ii);
+	r = ii;
+      }
     }
     return r;
   }
 
-  std::vector<size_t> LongestHalfSideDimensions(double& delta) const {
-    double m = l[0];
-    for(size_t ii = 1; ii < d; ii++) {
-      if(m < l[ii]) {
-	m = l[ii];
-      }
+  double Distance() {
+    double r = 0;
+    for(unsigned int ii = 0; ii < DimensionFloat(); ii++) {
+      r+=std::pow(1./3, RF.NumberDivisions(ii));
     }
-    std::vector<size_t> Dims(d);
-    size_t kk = 0;
-    for(size_t ii = 0; ii < d; ii++) {
-      if(l[ii] == m) Dims[kk++] = ii;
+    for(unsigned int ii = 0; ii < DimensionInteger(); ii++) {
+      r+=std::pow(1./3, RI.NumberDivisions(ii));
     }
-    Dims.resize(kk);
-    delta = m/3;
-    return Dims;
+    return std::sqrt(r);
   }
 
-  double ValueAtCenter(void) const {
-    return fc;
+  double LengthDirection(size_t dir) const {
+    if(dir < DimensionFloat()) {
+      return std::pow(1./3, RF.NumberDivisions(dir));
+    } else {
+      dir -= DimensionFloat();
+      return std::pow(1./3, RI.NumberDivisions(dir));
+    }
   }
 
-  double EvalAtCenter(functND f, const PointND& LowerBound, const PointND& UpperBound, const void* data) {
-    fc = EvalFunctionND(f, c, LowerBound, UpperBound, data);
-    return fc;
+  double EvalAtCenter(functND f, const PointMixed& LowerBound, const PointMixed& UpperBound, const void* data) {
+    const PointMixed c = Center();
+    v = EvalFunctionND(f, c, LowerBound, UpperBound, data);
+    return v;
   }
 
-  friend void Flatten(RectangleND& R, size_t dim) {
-    R.l[dim] /= 3;
+  double ValueAtCenter() {
+    return v;
   }
-
-
-  PointND Center(void) const {
-    return c;
-  }
-
-
-  double Center(size_t ii) const {
-    return c[ii];
-  }
-
-
-  double& Center(size_t ii) {
-    return c[ii];
-  }
-
-  double HalfLength(size_t ii) const {
-    return l[ii];
-  }
-
-  double& HalfLength(size_t ii) {
-    return l[ii];
-  }
-
 };
+
 #endif

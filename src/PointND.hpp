@@ -4,44 +4,38 @@
 #include <vector>
 #include <iostream>
 
+template<typename T = double>
 class PointND {
 private:
-  size_t d;
-  std::vector<double> x;
+  std::vector<T> x;
 public:
   PointND(size_t d_) {
-    d = d_;
-    x = std::vector<double>(d);
+    x = std::vector<T>(d_);
   }
-  PointND(size_t d_, double val) {
-    d = d_;
-    x = std::vector<double>(d);
-    for(size_t ii = 0; ii < d; ii++) {
-      x[ii] = val;
-    }
+  PointND(size_t d_, T val) {
+    x = std::vector<T>(d_, val);
   }
   PointND() {}
 
   size_t Dimension(void) const {
-    return d;
+    return x.size();
   }
 
-  double operator[](size_t ii) const {
+  T operator[](size_t ii) const {
     return x[ii];
   }
 
-  double& operator[](size_t ii) {
+  T& operator[](size_t ii) {
     return x[ii];
   }
 
-  friend std::ostream& operator<<(std::ostream& os, const PointND& P)
+  friend std::ostream& operator<<(std::ostream& os, const PointND<T>& P)
   {
-    for(size_t ii = 0; ii < P.d; ii++) {
-      os << P.x[ii] << std::endl;
+    for(size_t ii = 0; ii < P.Dimension(); ii++) {
+      os << P.x[ii] << " ";
     }
     return os;
   }
-
 };
 
 #endif

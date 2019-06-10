@@ -36,15 +36,5 @@ std::vector<size_t> LowerConvexHull(std::vector<Point2D > P)
       H.pop_back();
     }
   }
-
-  // std::ofstream points((f+"_points.txt").c_str());
-  // for(size_t ii = 0; ii < P.size(); ii++) {
-  //   points << P[ii] << std::endl;
-  // }
-  // std::ofstream convex((f+"_convex.txt").c_str());
-  // for(size_t ii = 0; ii < L.size(); ii++) {
-  //   convex << Q[L[ii]] << std::endl;
-  // }
-
   return L;
 }

@@ -7,7 +7,7 @@ inline double square(double x) {
   return x*x;
 }
 
-double Rosenbrock(const PointND& v, const void* data) {
+double Rosenbrock(const PointND<>& v, const void* data) {
   const int n = *(int*)(data);
   double r = 0;
   for(int ii = 0; ii < n-1; ii++) {
@@ -16,7 +16,7 @@ double Rosenbrock(const PointND& v, const void* data) {
   return r;
 }
 
-double Custom(const PointND& v, const void* data) {
+double Custom(const PointND<>& v, const void* data) {
   const int n = *(int*)(data);
     double r = 0;
     for(int ii = 0; ii < n; ii++) {
@@ -26,7 +26,7 @@ double Custom(const PointND& v, const void* data) {
   return r;
 }
 
-double Rastigrin(const PointND& v, const void* data) {
+double Rastigrin(const PointND<>& v, const void* data) {
   const int n = *(int*)(data);
   double r = 10*n;
   for(int ii = 0; ii < n; ii++) {
@@ -35,7 +35,7 @@ double Rastigrin(const PointND& v, const void* data) {
   return r;
 }
 
-double Ackley(const PointND& v, const void* data) {
+double Ackley(const PointND<>& v, const void* data) {
   const int n = *(int*)(data);
   double sum = 0, sumc = 0;
   for(int ii = 0; ii < n; ii++) {
@@ -45,7 +45,7 @@ double Ackley(const PointND& v, const void* data) {
   return -20*exp(-.2*sqrt(1./n*sum)) - exp(1./n*sumc) + 20 + exp(1);
 }
 
-double StyblinskiTang(const PointND& v, const void* data) {
+double StyblinskiTang(const PointND<>& v, const void* data) {
   const int n = *(int*)(data);
   double sum = 0;
   for(int ii = 0; ii < n; ii++) {
@@ -55,23 +55,30 @@ double StyblinskiTang(const PointND& v, const void* data) {
 }
 
 
+double Mixed1(const PointMixed& x, const void* data) {
+  const auto Pf = x.first;
+  const auto Pi = x.second;
+  double r = 0;
+  for(unsigned int ii = 0; ii < Pf.Dimension(); ii++) {
+    r += Pf[ii];
+  }
+  for(unsigned int ii = 0; ii < Pi.Dimension(); ii++) {
+    r += Pi[ii];
+  }
+  return r;
+}
+
+double Mixed2(const PointMixed& x, const void* data) {
+  const auto Pf = x.first;
+  const auto Pi = x.second;
+  return std::cos(Pf[0]) + Pi[0];
+}
+
 
 int main(int argc, char** argv) {
-  if(argc > 3) {
-    const functND l[] = {Rosenbrock, Custom, Rastigrin, Ackley, StyblinskiTang};
-    const int d = std::atoi(argv[2]);
-    PointND LB(d,2.1);
-    PointND UB(d,0);
-
-    DIRECT MD(l[2], d, LB, UB, std::atoi(argv[1]), std::atof(argv[3]), (void*)&d);
-    std::cout << MD.Optimize() << std::endl;
-#ifdef DEBUG
-    MD.Postpro();
-#endif
-    return 0;
-  } else {
-    std::cerr << "Not enough arguments" << std::endl;
-    std::cerr << "Usage : " << argv[0] << " MaxEvals Dimension epsilon" << std::endl;
-    return 1;
-  }
+  const PointMixed LB = CreatePointMixed(PointND<double>(1, -M_PI), PointND<int>(1,-10));
+  const PointMixed UB = CreatePointMixed(PointND<double>(1, M_PI), PointND<int>(1,10));
+  const unsigned int MaxEvals = 100;
+  DIRECT D(Mixed2, LB, UB, MaxEvals);
+  std::cout << D.Optimize() << std::endl;
 }

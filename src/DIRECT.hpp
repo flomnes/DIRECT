@@ -7,11 +7,11 @@
 #include <fstream>
 #include <string>
 #endif
-#include "PreSplitContainer.hpp"
 #include "RectangleND.hpp"
 #include "ConvexHull.hpp"
 #include "Point2D.hpp"
 #include "typedefs.hpp"
+#include "PointMixed.hpp"
 
 
 class DIRECT {
@@ -19,31 +19,27 @@ private:
   // List of rectangles built by DIRECT algorithm, in the hypercube [0,1]^d
   std::vector<RectangleND > RectangleList;
   // Bounds imposed on variables in the optimization problem
-  PointND LowerBound, UpperBound;
+  PointMixed LowerBound, UpperBound;
   // Minimum value of f so far, parameter used to avoid too local search
   double fmin, epsilon;
   // Objective function. We seek to **minimize** f. To maximize a function, specify -f
   functND f;
-  // Number of variables in the optimization problem
-  size_t d;
+  // Number of variables in the optimization problem : float and integer
+  size_t df, di;
   // Data provided to f
   void* data;
   // Current and maximal number of function evaluations
   unsigned int CurrEvals = 0, MaxEvals;
   // Current best candidate rectangle
   size_t BestRectangleSoFar;
-  // Split rectangle id into 3 rectangles along a specified dimension
-  // Add 2 new rectangle into RectangleList. Keep original rectangle, only change its length along specified dimension
 
   void DivideRectangle(size_t id);
-  void DivideRectangleFinal(size_t id, double delta, const std::vector<PreSplit>& PreSplitValues);
-  std::vector<PreSplit> SortByEvals(size_t id, double delta, const std::vector<size_t>& AlongDimension);
 
   std::vector<size_t> SelectRectanglesFromSlopes(const std::vector<size_t>& LCHIndices, const std::vector<Point2D >& DistanceValuesAtCenters);
-  std::vector<size_t> PotentiallyOptimalRectangles(void);
+  std::vector<size_t> PotentiallyOptimalRectangles();
 
-  void InitialEvaluation(void);
-
+  void InitialEvaluation();
+  void CompareUpdate(double v, size_t id);
 
 public:
   // Create a DIRECT object with parameters
@@ -54,17 +50,15 @@ public:
   // MaxEvals : Maximum number of evaluations of f
   // epsilon :
   // data :
-  DIRECT(functND f_, size_t d_, PointND LowerBound_, PointND UpperBound_ , unsigned int MaxEvals_, double epsilon_ = 1e-8, void* data_ = NULL);
-  PointND Optimize(void);
+  DIRECT(functND f_,PointMixed LowerBound_, PointMixed UpperBound_ , unsigned int MaxEvals_, double epsilon_ = 1e-8, void* data_ = NULL);
+  PointMixed Optimize(void);
 
 
 #ifdef DEBUG
   void Postpro(void) {
     std::ofstream p("point.txt");
     for(size_t ii = 0; ii < RectangleList.size(); ii++) {
-      for(size_t jj = 0; jj < d; jj++)
-	p << RectangleList[ii].Center(jj) << " ";
-    p << std::endl;
+      p << RectangleList[ii].Center();
     }
   }
 #endif
