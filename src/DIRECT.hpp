@@ -15,7 +15,11 @@
 
 
 class DIRECT {
+#ifdef DIRECT_TESTING
+public:
+#else
 private:
+#endif
   // List of rectangles built by DIRECT algorithm, in the hypercube [0,1]^d
   std::vector<RectangleND > RectangleList;
   // Bounds imposed on variables in the optimization problem
@@ -33,7 +37,7 @@ private:
   // Current best candidate rectangle
   size_t BestRectangleSoFar;
 
-  void DivideRectangle(size_t id);
+  bool DivideRectangle(size_t id);
 
   std::vector<size_t> SelectRectanglesFromSlopes(const std::vector<size_t>& LCHIndices, const std::vector<Point2D >& DistanceValuesAtCenters);
   std::vector<size_t> PotentiallyOptimalRectangles();
@@ -50,9 +54,14 @@ public:
   // MaxEvals : Maximum number of evaluations of f
   // epsilon :
   // data :
-  DIRECT(functND f_,PointMixed LowerBound_, PointMixed UpperBound_ , unsigned int MaxEvals_, double epsilon_ = 1e-8, void* data_ = NULL);
+  DIRECT(functND f_,PointMixed LowerBound_, PointMixed UpperBound_ , unsigned int MaxEvals_, void* data_ = NULL, double epsilon_ = 1e-8);
   PointMixed Optimize(void);
+  // For testing purposes
+#ifdef DIRECT_TESTING
+  DIRECT(const std::vector<RectangleND>& list, functND f_, PointMixed LowerBound_, PointMixed UpperBound_);
+  friend std::ofstream& operator<<(std::ofstream& os, const DIRECT& d);
 
+#endif
 
 #ifdef DEBUG
   void Postpro(void) {

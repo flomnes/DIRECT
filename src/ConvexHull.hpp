@@ -4,11 +4,11 @@
 #include <fstream>
 #include <string>
 
-#include <vector>
+#include <map>
 #include <algorithm>
 #include "Point2D.hpp"
 
-std::vector<size_t> LowerConvexHull(std::vector<Point2D > P);
+std::vector<size_t> LowerConvexHull(std::map<size_t, Point2D > P);
 
 
 #endif

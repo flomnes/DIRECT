@@ -19,7 +19,7 @@ private:
   RectangleFloat RF;
   // Function value at center
   double v;
-
+public:
   RectangleND CopySideFloat(size_t dir, char side) const {
     const double l = LengthDirection(dir);
     RectangleFloat NewRF = RF;
@@ -27,13 +27,14 @@ private:
     NewRF.Center(dir) = RF.Center(dir) + side*(l/3);
     return Copy(NewRF);
   }
-public:
+
   RectangleND CopySideInteger(size_t dir, int delta, char side) const {
     RectangleInteger NewRI = RI;
     dir -= DimensionFloat();
     NewRI.NumberDivisions(dir)++;
     const int a = NewRI(dir, 0);
     const int b = NewRI(dir, 1);
+    bool ReturnVal = false;
     if(delta >=1) {
       switch(side) {
       case -1:
@@ -43,6 +44,7 @@ public:
       case 0:
 	NewRI(dir, 0) = a+delta;
 	NewRI(dir, 1) = b-delta;
+	ReturnVal = true;
 	break;
       case 1:
 	NewRI(dir, 0) = b-delta+1;
@@ -57,6 +59,7 @@ public:
       case 0:
 	NewRI(dir, 0) = a;
 	NewRI(dir, 1) = a;
+	ReturnVal = true;
 	break;
       case 1:
 	NewRI(dir, 0) = b;
@@ -67,11 +70,13 @@ public:
 	exit(1);
       }
     }
-    return Copy(NewRI);
+    if(ReturnVal)
+      return Copy(NewRI);
+    else
+      return Copy(NewRI, v);
   }
 
   RectangleND(const PointMixed& LowerBound, const PointMixed& UpperBound) {
-    //    RF = RectangleFloat(LowerBound.first, UpperBound.first);
     const size_t dimFloat = LowerBound.first.Dimension();
     RF = RectangleFloat(PointND<double>(dimFloat, 0), PointND<double>(dimFloat,1));
     RI = RectangleInteger(LowerBound.second, UpperBound.second);
@@ -87,7 +92,6 @@ public:
     RI = RI_;
     RF = RF_;
   }
-
 
   int ComputeDelta(size_t dir) const {
     assert(dir >= DimensionFloat());
@@ -107,6 +111,11 @@ public:
     return RectangleND(RI_, RF);
   }
 
+  RectangleND Copy(const RectangleInteger& RI_, double v_) const {
+    return RectangleND(RI_, RF, v_);
+  }
+
+
   RectangleND Copy(const RectangleFloat& RF_) const {
     return RectangleND(RI, RF_);
   }
@@ -115,7 +124,7 @@ public:
     return std::make_pair(RF.Center(), RI.Center());
   }
 
-  PointMixed Center(const PointMixed& LowerBound, const PointMixed& UpperBound) {
+  PointMixed Center(const PointMixed& LowerBound, const PointMixed& UpperBound) const {
     const PointMixed x = Center();
     const size_t df = x.first.Dimension();
     PointMixed xis = std::make_pair(PointND<>(df), x.second);
@@ -156,13 +165,13 @@ public:
     }
   }
 
-  RectangleND CopyLeftFloat(size_t dir) const {
-    return CopySideFloat(dir, -1);
-  }
+  // RectangleND CopyLeftFloat(size_t dir) const {
+  //   return CopySideFloat(dir, -1);
+  // }
 
-  RectangleND CopyRightFloat(size_t dir) const {
-    return CopySideFloat(dir, 1);
-  }
+  // RectangleND CopyRightFloat(size_t dir) const {
+  //   return CopySideFloat(dir, 1);
+  // }
 
   bool IsDirectionAdmissible(size_t dim) const {
     if(dim < DimensionFloat()) {
@@ -177,15 +186,17 @@ public:
   // Any float direction is admissible
   // An integer direction is admissible only if it contains two points or more
 
-  size_t LargestAdmissibleDirection() const {
+  int LargestAdmissibleDirection() const {
     const size_t dim = Dimension();
     // Get value of largest (i.e least divided) direction
-    size_t ii = 0;
-    unsigned int r;
+    unsigned int ii = 0;
+    int r;
     while(!IsDirectionAdmissible(ii)) {
       ii++;
     }
-    assert(ii < dim && "No admissible direction for rectangle division");
+    if(ii >= dim)
+      return -1;
+    //    assert(ii < dim && "No admissible direction for rectangle division");
     r = ii;
     unsigned int smallestdim = NumberDivisions(ii);
     for(ii = 0; ii < dim; ii++) {
@@ -195,6 +206,15 @@ public:
 	smallestdim = NumberDivisions(ii);
 	r = ii;
       }
+    }
+    return r;
+  }
+
+  bool IsDivisible() {
+    bool r = false;
+    for(size_t ii = 0; ii < Dimension(); ii++) {
+      if(IsDirectionAdmissible(ii))
+	r = true;
     }
     return r;
   }
@@ -220,14 +240,17 @@ public:
   }
 
   double EvalAtCenter(functND f, const PointMixed& LowerBound, const PointMixed& UpperBound, const void* data) {
-    const PointMixed c = Center();
-    v = EvalFunctionND(f, c, LowerBound, UpperBound, data);
+    const PointMixed c = Center(LowerBound, UpperBound);
+    v = EvalFunctionND(f, c, data);
     return v;
   }
 
   double ValueAtCenter() {
     return v;
   }
+#ifdef DIRECT_TESTING
+  friend std::ostream& operator<<(std::ostream& os, const RectangleND& R);
+#endif
 };
 
 #endif

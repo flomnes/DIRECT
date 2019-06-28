@@ -4,7 +4,11 @@
 #include <cassert>
 
 class RectangleFloat {
+#ifdef DIRECT_TESTING
+public:
+#else
 private:
+#endif
   PointND<double> center;
   std::vector<unsigned int> divisions;
 public:
@@ -52,6 +56,10 @@ public:
   unsigned int& NumberDivisions(size_t dim) {
     return divisions[dim];
   }
+#ifdef DIRECT_TESTING
+  friend std::ostream& operator<<(std::ostream& os, const RectangleFloat& R);
+#endif
+
 };
 
 

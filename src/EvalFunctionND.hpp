@@ -3,6 +3,6 @@
 
 #include "typedefs.hpp"
 
-double EvalFunctionND(functND f, const PointMixed& x, const PointMixed& LowerBound, const PointMixed& UpperBound, const void* data);
+double EvalFunctionND(functND f, const PointMixed& x, const void* data);
 
 #endif

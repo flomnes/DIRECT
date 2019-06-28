@@ -29,7 +29,7 @@ public:
   }
 
   int ComputeDelta(size_t dir) const {
-    return (range[dir].second - range[dir].first)/3;
+    return (range[dir].second - range[dir].first + 1)/3;
   }
 
   PointND<int> Center() const {
@@ -50,7 +50,7 @@ public:
   }
 
   bool IsDirectionAdmissible(size_t dim) const {
-    return (range[dim].second - range[dim].first) > 1;
+    return (range[dim].second - range[dim].first) >= 1;
   }
 
   int& operator()(size_t dim, char jj) {
@@ -62,6 +62,9 @@ public:
     }
     return range[dim].first;
   }
+#ifdef DIRECT_TESTING
+  friend std::ostream& operator<<(std::ostream& os, const RectangleInteger& R);
+#endif
 };
 
 

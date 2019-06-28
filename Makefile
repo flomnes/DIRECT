@@ -1,9 +1,15 @@
 CXXFLAGS=-Wall -std=c++11 -lm
 
+HPPFILES=$(wildcard src/*.hpp)
 CXXFILES=$(wildcard src/*.cpp)
 OBJFILES=$(CXXFILES:src/%.cpp=obj/%.o)
 
 all:O2
+
+test1:${OBJFILES} UnitTests/TestSplit.cpp
+	${CXX} ${CXXFLAGS} $^ -o $@
+
+
 
 debug: CXXFLAGS += -DDEBUG -g
 debug: direct
@@ -11,7 +17,7 @@ debug: direct
 O2 : CXXFLAGS += -O2
 O2 : direct
 
-direct:${OBJFILES}
+direct:${OBJFILES} UnitTests/main.cpp
 	${CXX} ${CXXFLAGS} $^ -o $@
 
 obj/%.o:src/%.cpp
